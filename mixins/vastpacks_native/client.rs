@@ -179,21 +179,27 @@ pub(super) fn use_item(game: &mut super::Game<'_>, stack: &ItemStack, claimed: &
 
 /// The last row of a backpack with pages: the previous page, which page this is (as many papers), the next.
 fn nav(page: usize, pages: usize) -> Vec<Option<ItemStack>> {
-    let named = |item: &str, count: u32, name: String| {
+    // Names as translatable text, so each player reads them in their own language.
+    let named = |item: &str, count: u32, name: Tag| {
         let mut s = ItemStack::new(item, count);
-        s.data_mut().set_other("minecraft:custom_name", Some(Tag::String(name.as_str().into())));
+        s.data_mut().set_other("minecraft:custom_name", Some(name));
         Some(s)
     };
-    let text = |k: &str, f: &str| horizon_client::lang::get_or(k, f);
-    let filler = || named("minecraft:gray_stained_glass_pane", 1, " ".into());
+    let tr = |key: &str, with: Vec<String>| {
+        let mut parts = vec![("translate", Tag::String(key.into()))];
+        if !with.is_empty() {
+            parts.push(("with", Tag::List(with.iter().map(|w| Tag::String(w.as_str().into())).collect())));
+        }
+        Tag::compound(parts)
+    };
+    let filler = || named("minecraft:gray_stained_glass_pane", 1, Tag::String(" ".into()));
     let mut row: Vec<Option<ItemStack>> = (0..9).map(|_| filler()).collect();
     if page > 0 {
-        row[0] = named("minecraft:arrow", 1, text("vastpacks.previous", "Previous page"));
+        row[0] = named("minecraft:arrow", 1, tr("vastpacks.previous", Vec::new()));
     }
-    let label = text("vastpacks.page", "Page %s of %s").replacen("%s", &(page + 1).to_string(), 1).replacen("%s", &pages.to_string(), 1);
-    row[4] = named("minecraft:paper", (page + 1) as u32, label);
+    row[4] = named("minecraft:paper", (page + 1) as u32, tr("vastpacks.page", vec![(page + 1).to_string(), pages.to_string()]));
     if page + 1 < pages {
-        row[8] = named("minecraft:arrow", 1, text("vastpacks.next", "Next page"));
+        row[8] = named("minecraft:arrow", 1, tr("vastpacks.next", Vec::new()));
     }
     row
 }
@@ -221,11 +227,13 @@ pub(super) fn server_tick(game: &mut super::Game<'_>) {
         if pages > 1 {
             items.extend(nav(page, pages));
         }
-        let name = horizon_client::lang::get_or(&format!("item.{}", p.item.replace(':', ".")), &p.item);
+        // Translatable, so each player reads it in their own language.
+        use horizon_client::text::Text;
+        let name = Text::translate(&format!("item.{}", p.item.replace(':', ".")), &[]);
         let title = if pages > 1 {
-            horizon_client::text::Text::literal(format!("{name} ({}/{pages})", page + 1))
+            Text::translate("vastpacks.title_paged", &[name, Text::literal((page + 1).to_string()), Text::literal(pages.to_string())])
         } else {
-            horizon_client::text::Text::literal(name)
+            name
         };
         match game.native_open_menu_with_input(p.uuid, rows, title, items, 0..per_page) {
             Some(window) => {

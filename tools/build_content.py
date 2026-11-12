@@ -93,10 +93,10 @@ def png(pixels):
 def build(out):
     files, items = {}, []
     lang_en = {"vastpacks.slots": "%s slots", "vastpacks.pages": "%s pages", "vastpacks.previous": "Previous page",
-               "vastpacks.next": "Next page", "vastpacks.page": "Page %s of %s", "vastpacks.busy": "That backpack is already open.",
+               "vastpacks.next": "Next page", "vastpacks.page": "Page %s of %s", "vastpacks.title_paged": "%s (%s/%s)", "vastpacks.busy": "That backpack is already open.",
                "vastpacks.no_world": "Backpacks open in a world."}
     lang_pt = {"vastpacks.slots": "%s espaços", "vastpacks.pages": "%s páginas", "vastpacks.previous": "Página anterior",
-               "vastpacks.next": "Próxima página", "vastpacks.page": "Página %s de %s", "vastpacks.busy": "Essa mochila já está aberta.",
+               "vastpacks.next": "Próxima página", "vastpacks.page": "Página %s de %s", "vastpacks.title_paged": "%s (%s/%s)", "vastpacks.busy": "Essa mochila já está aberta.",
                "vastpacks.no_world": "Mochilas abrem dentro de um mundo."}
     below = None
     for name, rows, en, pt, rarity, trim, material in TIERS:
