@@ -10,8 +10,13 @@ hand and it opens like a chest.
 | Gold Backpack | 36 | an Iron Backpack and a block of gold |
 | Diamond Backpack | 45 | a Gold Backpack and a block of diamond |
 | Netherite Backpack | 54 | a Diamond Backpack and a netherite ingot |
+| Stellarite Backpack | 90 (2 pages) | a Netherite Backpack and a block of Stellarite |
+| Infernium Backpack | 135 (3 pages) | a Stellarite Backpack and a block of Infernium |
+| Voidium Backpack | 180 (4 pages) | an Infernium Backpack and a block of Voidium |
 
-An upgrade (in the crafting grid, the backpack and the material) keeps everything the backpack holds.
+An upgrade (in the crafting grid, the backpack and the material) keeps everything the backpack holds. The last three
+need [Vast Depths](https://github.com/voltzz900/vast-ores): their recipes are there only while it is installed. A
+chest menu holds at most 54 slots, so they show 45 a page and their last row turns the pages.
 
 ## How it keeps your things
 
@@ -19,19 +24,20 @@ A backpack item carries only an id; what it holds is kept in the world, in `<wor
 backups carry it), the way Sophisticated Backpacks keeps it in the world's saved data. So:
 
 - a backpack dropped, thrown or lost while it is open takes nothing with it, and nothing can be counted twice;
-- a backpack put inside a backpack goes back to you when it closes (no backpack in a backpack);
+- a backpack put inside a backpack goes back to you when it closes, and so does a bundle or shulker box that holds
+  one (no backpack can end up locked inside itself);
 - the contents are written when the menu closes, for any reason (closing it, leaving the world, dying); a new file
   is written and then renamed over the old one, and if it can't be written everything goes back to you.
 
-Names in English and Brazilian Portuguese. It works on a server too: the menu is a plain chest menu any client shows.
+Names in English and Brazilian Portuguese. The menu is a plain chest menu, so it should work on servers too; it has
+been tested in single player.
 
 **Install both:** `vastpacks_native-<version>.hnmod` (the native mod: build natives in the launcher after) and
 `vastpacks-<version>.hmod` (the items, art, recipes and names).
 
 ## Not yet
 
-Upgrades (pickup, magnet, feeding, restock), opening with a key, wearing it, and bigger tiers with pages (a chest
-menu holds at most 54 slots).
+Upgrades (pickup, magnet, feeding, restock), opening with a key, wearing it.
 
 ## Building
 

@@ -12,4 +12,4 @@
 
 ## Description
 
-The content half of Vast Packs: the five backpacks (Leather, Iron, Gold, Diamond, Netherite) as items, their sprites drawn for this mod, the recipes (and the upgrades, which keep what a backpack holds) and the names in English and Brazilian Portuguese. **The native mod `vastpacks_native` opens them and keeps what they hold**; install both.
+The content half of Vast Packs: the backpacks (Leather, Iron, Gold, Diamond, Netherite, and Stellarite, Infernium and Voidium whose recipes need Vast Depths) as items, their sprites drawn for this mod, the recipes (and the upgrades, which keep what a backpack holds) and the names in English and Brazilian Portuguese. **The native mod `vastpacks_native` opens them and keeps what they hold**; install both.

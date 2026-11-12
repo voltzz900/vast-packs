@@ -15,35 +15,64 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-/// The backpacks and their rows (9 slots each).
-const TIERS: [(&str, u8); 5] = [
-    ("vastpacks:leather_backpack", 2),
-    ("vastpacks:iron_backpack", 3),
-    ("vastpacks:gold_backpack", 4),
-    ("vastpacks:diamond_backpack", 5),
-    ("vastpacks:netherite_backpack", 6),
+/// The backpacks: their rows of 9 slots, and their pages. Past a chest menu's 54 slots (Vast Depths' metals) a page
+/// holds 45 and the last row turns them.
+const TIERS: [(&str, u8, usize); 8] = [
+    ("vastpacks:leather_backpack", 2, 1),
+    ("vastpacks:iron_backpack", 3, 1),
+    ("vastpacks:gold_backpack", 4, 1),
+    ("vastpacks:diamond_backpack", 5, 1),
+    ("vastpacks:netherite_backpack", 6, 1),
+    ("vastpacks:stellarite_backpack", 6, 2),
+    ("vastpacks:infernium_backpack", 6, 3),
+    ("vastpacks:voidium_backpack", 6, 4),
 ];
+const PER_PAGE: usize = 45;
 const ID_KEY: &str = "vastpacks_id";
 
-fn rows(item: &str) -> Option<u8> {
-    TIERS.iter().find(|(id, _)| *id == item).map(|(_, r)| *r)
+/// A backpack's menu: its rows, the slots of a page, and its pages.
+fn layout(item: &str) -> Option<(u8, usize, usize)> {
+    let (_, rows, pages) = TIERS.iter().find(|(id, _, _)| *id == item)?;
+    Some(if *pages > 1 { (6, PER_PAGE, *pages) } else { (*rows, usize::from(*rows) * 9, 1) })
 }
 
 fn is_backpack(item: &str) -> bool {
-    rows(item).is_some()
+    layout(item).is_some()
 }
 
-/// A backpack waiting for its menu: the player, its id, its item.
+/// A stack that is a backpack or carries one anywhere in its components (a bundle, a shulker box, a bundle in a
+/// shulker box...): it never goes into a backpack, or a backpack could end up locked inside itself.
+fn holds_backpack(stack: &ItemStack) -> bool {
+    fn walk(t: &Tag) -> bool {
+        match t {
+            Tag::String(s) => is_backpack(&s.to_string_lossy()),
+            Tag::List(l) => l.iter().any(walk),
+            Tag::Compound(c) => c.iter().any(|(_, v)| walk(v)),
+            _ => false,
+        }
+    }
+    is_backpack(&stack.item) || horizon_items::item_nbt::item_to_nbt(stack).get("components").is_some_and(walk)
+}
+
+/// A backpack waiting for its menu: the player, its id, its item, and the ticks it may still wait (a menu that can't
+/// open this tick, the player not in reach of this level's tick, is tried again).
 struct Pending {
     uuid: u128,
     id: String,
     item: String,
+    page: usize,
+    /// A page turned: it waits for the last page to be written instead of being refused as already open.
+    turning: bool,
+    tries: u8,
 }
 
-/// An open backpack: its id and how many slots its menu has.
+/// An open backpack: its id, its item, the page shown, the slots a page has and its pages.
 struct Open {
     id: String,
-    size: usize,
+    item: String,
+    page: usize,
+    per_page: usize,
+    pages: usize,
 }
 
 static PENDING: Mutex<Vec<Pending>> = Mutex::new(Vec::new());
@@ -144,8 +173,29 @@ pub(super) fn use_item(game: &mut super::Game<'_>, stack: &ItemStack, claimed: &
     if let Ok(mut p) = PENDING.lock()
         && !p.iter().any(|q| q.id == id)
     {
-        p.push(Pending { uuid: player.uuid, id, item: stack.item.to_string() });
+        p.push(Pending { uuid: player.uuid, id, item: stack.item.to_string(), page: 0, turning: false, tries: 40 });
     }
+}
+
+/// The last row of a backpack with pages: the previous page, which page this is (as many papers), the next.
+fn nav(page: usize, pages: usize) -> Vec<Option<ItemStack>> {
+    let named = |item: &str, count: u32, name: String| {
+        let mut s = ItemStack::new(item, count);
+        s.data_mut().set_other("minecraft:custom_name", Some(Tag::String(name.as_str().into())));
+        Some(s)
+    };
+    let text = |k: &str, f: &str| horizon_client::lang::get_or(k, f);
+    let filler = || named("minecraft:gray_stained_glass_pane", 1, " ".into());
+    let mut row: Vec<Option<ItemStack>> = (0..9).map(|_| filler()).collect();
+    if page > 0 {
+        row[0] = named("minecraft:arrow", 1, text("vastpacks.previous", "Previous page"));
+    }
+    let label = text("vastpacks.page", "Page %s of %s").replacen("%s", &(page + 1).to_string(), 1).replacen("%s", &pages.to_string(), 1);
+    row[4] = named("minecraft:paper", (page + 1) as u32, label);
+    if page + 1 < pages {
+        row[8] = named("minecraft:arrow", 1, text("vastpacks.next", "Next page"));
+    }
+    row
 }
 
 /// At the head of `native_server_tick`: the menus asked for.
@@ -154,20 +204,82 @@ pub(super) fn server_tick(game: &mut super::Game<'_>) {
         return;
     }
     let pending: Vec<Pending> = PENDING.lock().map(|mut p| std::mem::take(&mut *p)).unwrap_or_default();
-    for p in pending {
-        let Some(rows) = rows(&p.item) else { continue };
+    let mut again = Vec::new();
+    for mut p in pending {
+        let Some((rows, per_page, pages)) = layout(&p.item) else { continue };
+        let page = p.page.min(pages - 1);
+        // A backpack opens once at a time; a page turned waits for the last page's slots to be written.
         if is_open(&p.id) {
+            if p.turning && p.tries > 0 {
+                p.tries -= 1;
+                again.push(p);
+            }
             continue;
         }
-        let size = usize::from(rows) * 9;
-        let items = load(game, &p.id, size);
-        let name = p.item.trim_start_matches("vastpacks:");
-        let title = horizon_client::text::Text::translate(&format!("item.vastpacks.{name}"), &[]);
-        if let Some(window) = game.native_open_menu_with_input(p.uuid, rows, title, items, 0..size)
-            && let Ok(mut o) = OPEN.lock()
-        {
-            o.get_or_insert_with(HashMap::new).insert((p.uuid, window), Open { id: p.id, size });
+        let all = load(game, &p.id, per_page * pages);
+        let mut items: Vec<Option<ItemStack>> = all[page * per_page..(page + 1) * per_page].to_vec();
+        if pages > 1 {
+            items.extend(nav(page, pages));
         }
+        let name = horizon_client::lang::get_or(&format!("item.{}", p.item.replace(':', ".")), &p.item);
+        let title = if pages > 1 {
+            horizon_client::text::Text::literal(format!("{name} ({}/{pages})", page + 1))
+        } else {
+            horizon_client::text::Text::literal(name)
+        };
+        match game.native_open_menu_with_input(p.uuid, rows, title, items, 0..per_page) {
+            Some(window) => {
+                if let Ok(mut o) = OPEN.lock() {
+                    o.get_or_insert_with(HashMap::new)
+                        .insert((p.uuid, window), Open { id: p.id, item: p.item, page, per_page, pages });
+                }
+            }
+            None if p.tries > 0 => {
+                p.tries -= 1;
+                again.push(p);
+            }
+            None => log::warn!("Vast Packs: backpack {} could not be opened for its player", p.id),
+        }
+    }
+    if !again.is_empty()
+        && let Ok(mut q) = PENDING.lock()
+    {
+        q.extend(again);
+    }
+}
+
+/// At `native_menu_clicked`: the last row of a backpack with pages turns them. The menu closes first (its page is
+/// written), then the next one opens.
+pub(super) fn menu_clicked(game: &mut super::Game<'_>, uuid: u128, window: i32, slot: i32) {
+    let turn = OPEN.lock().ok().and_then(|o| {
+        let open = o.as_ref()?.get(&(uuid, window))?;
+        if open.pages < 2 {
+            return None;
+        }
+        let at = usize::try_from(slot).ok()?.checked_sub(open.per_page)?;
+        let page = match at {
+            0 if open.page > 0 => open.page - 1,
+            8 if open.page + 1 < open.pages => open.page + 1,
+            _ => return None,
+        };
+        Some(Pending { uuid, id: open.id.clone(), item: open.item.clone(), page, turning: true, tries: 40 })
+    });
+    if let Some(turn) = turn {
+        game.native_close_menu(uuid);
+        if let Ok(mut p) = PENDING.lock() {
+            p.push(turn);
+        }
+    }
+}
+
+/// At `native_server_about_to_start`: a new server keeps nothing of the last one's menus (a close never heard
+/// would leave a backpack "already open" for good).
+pub(super) fn server_about_to_start() {
+    if let Ok(mut o) = OPEN.lock() {
+        *o = None;
+    }
+    if let Ok(mut p) = PENDING.lock() {
+        p.clear();
     }
 }
 
@@ -175,17 +287,23 @@ pub(super) fn server_tick(game: &mut super::Game<'_>) {
 pub(super) fn menu_input_closed(game: &mut super::Game<'_>, uuid: u128, window: i32, slots: &mut Vec<Option<ItemStack>>) {
     let open = OPEN.lock().ok().and_then(|mut o| o.as_mut()?.remove(&(uuid, window)));
     let Some(open) = open else { return };
-    // What it keeps: everything but backpacks, which go back to the player (a backpack in itself, or in another).
-    let mut keep: Vec<Option<ItemStack>> = vec![None; open.size];
-    for (i, slot) in slots.iter().enumerate().take(open.size) {
+    // What it keeps: everything but backpacks and what carries one, which go back to the player.
+    let size = open.per_page;
+    let mut keep: Vec<Option<ItemStack>> = vec![None; size];
+    for (i, slot) in slots.iter().enumerate().take(size) {
         if let Some(s) = slot
-            && !is_backpack(&s.item)
+            && !holds_backpack(s)
         {
             keep[i] = Some(s.clone());
         }
     }
-    if save(game, &open.id, &keep) {
-        for (i, slot) in slots.iter_mut().enumerate().take(open.size) {
+    // This page's slots over the rest of the backpack.
+    let mut all = load(game, &open.id, open.per_page * open.pages);
+    for (i, k) in keep.iter().enumerate() {
+        all[open.page * open.per_page + i] = k.clone();
+    }
+    if save(game, &open.id, &all) {
+        for (i, slot) in slots.iter_mut().enumerate().take(size) {
             if keep[i].is_some() {
                 *slot = None;
             }

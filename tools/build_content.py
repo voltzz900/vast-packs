@@ -22,6 +22,15 @@ TIERS = [
     ("diamond_backpack", 5, "Diamond Backpack", "Mochila de Diamante", "rare", (0x5C, 0xE0, 0xD8), "minecraft:diamond_block"),
     ("netherite_backpack", 6, "Netherite Backpack", "Mochila de Netherita", "epic", (0x4A, 0x42, 0x48), "minecraft:netherite_ingot"),
 ]
+# Vast Depths' metals, past a chest menu's 54 slots: pages of 45 (the last row turns them). Their recipes are there
+# only while Vast Depths is installed.
+# name, pages, english, portuguese, trim, upgrade material
+VAST = [
+    ("stellarite_backpack", 2, "Stellarite Backpack", "Mochila de Estelarita", (0xF0, 0xB3, 0x3A), "vastdepths:stellarite_block"),
+    ("infernium_backpack", 3, "Infernium Backpack", "Mochila de Infernium", (0xE0, 0x56, 0x2A), "vastdepths:infernium_block"),
+    ("voidium_backpack", 4, "Voidium Backpack", "Mochila de Voidium", (0xC2, 0x3C, 0xE6), "vastdepths:voidium_block"),
+]
+PER_PAGE = 45
 
 LEATHER = (0x8A, 0x52, 0x2A)
 
@@ -83,9 +92,11 @@ def png(pixels):
 
 def build(out):
     files, items = {}, []
-    lang_en = {"vastpacks.slots": "%s slots", "vastpacks.busy": "That backpack is already open.",
+    lang_en = {"vastpacks.slots": "%s slots", "vastpacks.pages": "%s pages", "vastpacks.previous": "Previous page",
+               "vastpacks.next": "Next page", "vastpacks.page": "Page %s of %s", "vastpacks.busy": "That backpack is already open.",
                "vastpacks.no_world": "Backpacks open in a world."}
-    lang_pt = {"vastpacks.slots": "%s espaços", "vastpacks.busy": "Essa mochila já está aberta.",
+    lang_pt = {"vastpacks.slots": "%s espaços", "vastpacks.pages": "%s páginas", "vastpacks.previous": "Página anterior",
+               "vastpacks.next": "Próxima página", "vastpacks.page": "Página %s de %s", "vastpacks.busy": "Essa mochila já está aberta.",
                "vastpacks.no_world": "Mochilas abrem dentro de um mundo."}
     below = None
     for name, rows, en, pt, rarity, trim, material in TIERS:
@@ -109,6 +120,25 @@ def build(out):
             files[f"data/{NS}/recipe/{name}.json"] = {
                 "type": "minecraft:crafting_transmute", "category": "equipment", "group": "vastpacks_upgrade",
                 "input": below, "material": material, "result": {"id": full}}
+        items.append(full)
+        below = full
+    for name, pages, en, pt, trim, material in VAST:
+        full = f"{NS}:{name}"
+        slots = pages * PER_PAGE
+        files[f"data/{NS}/horizon/item/{name}.json"] = {
+            "template": "minecraft:leather", "max_stack_size": 1, "rarity": "epic",
+            "components": {"minecraft:lore": [
+                {"translate": "vastpacks.slots", "with": [str(slots)], "color": "gray", "italic": False},
+                {"translate": "vastpacks.pages", "with": [str(pages)], "color": "dark_gray", "italic": False}]}}
+        files[f"assets/{NS}/models/item/{name}.json"] = {"parent": "minecraft:item/generated",
+                                                         "textures": {"layer0": f"{NS}:item/{name}"}}
+        files[f"assets/{NS}/items/{name}.json"] = {"model": {"type": "minecraft:model", "model": f"{NS}:item/{name}"}}
+        files[f"assets/{NS}/textures/item/{name}.png"] = png(sprite(trim))
+        lang_en[f"item.{NS}.{name}"], lang_pt[f"item.{NS}.{name}"] = en, pt
+        files[f"data/{NS}/recipe/{name}.json"] = {
+            "type": "minecraft:crafting_transmute", "category": "equipment", "group": "vastpacks_upgrade",
+            "input": below, "material": material, "result": {"id": full},
+            "neoforge:conditions": [{"type": "neoforge:mod_loaded", "modid": "vastdepths"}]}
         items.append(full)
         below = full
     files[f"data/{NS}/tags/item/backpacks.json"] = {"values": items}
