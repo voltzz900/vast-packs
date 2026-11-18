@@ -33,8 +33,9 @@ Names in English and Brazilian Portuguese. The menu is a plain chest menu, so it
 the launcher.
 
 **From 0.1:** 0.1 kept a backpack's contents in the world (`<world>/vastpacks/<id>.dat`) and came as two files
-(`vastpacks_native-0.1.0.hnmod`, which launchers from 0.2.70 no longer load, and `vastpacks-0.1.0.hmod`). Those
-files are left where they are; 0.2 doesn't read them yet, so a 0.1 backpack opens empty.
+(`vastpacks_native-0.1.0.hnmod`, which launchers from 0.2.70 no longer load, and `vastpacks-0.1.0.hmod`). The
+first time a 0.1 backpack is opened with 0.2, its contents move from that file into it, and the file is renamed
+`<id>.dat.moved` (kept, never read again).
 
 ## Not yet
 

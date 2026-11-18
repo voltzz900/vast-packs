@@ -3,6 +3,8 @@
 //! backpack from going into itself and closes the menu when it leaves the hand. Past a chest menu's 54 slots (Vast
 //! Depths' metals) a page holds 45 and the last row turns them.
 
+mod migrate;
+
 use mod_api::{
     self, Hand, HostSide, Hooks, InteractionResult, ItemPart, ItemStack, MenuClickedEvent, MenuClosedEvent,
     MenuReplace, MenuSlotPlace, Registrar, RegistrationContext, ServerAboutToStartEvent, ServerHost, Text,
@@ -120,6 +122,28 @@ fn open(host: &mut dyn ServerHost, uuid: u128, item: &'static str, page: usize, 
     }
 }
 
+/// A 0.1 backpack (its contents in a file of the world) gets them back in itself, once: the held stack is replaced by
+/// one holding them, and the file is renamed so it is never read twice.
+fn move_old_contents(host: &mut dyn ServerHost, uuid: u128, held: &ItemStack, item: &str) {
+    let Some(id) = held.components().and_then(|c| migrate::old_id(c.as_nbt())) else { return };
+    let Some(world) = host.world_dir() else { return };
+    let path = migrate::file(&world, &id);
+    let Ok(bytes) = std::fs::read(&path) else { return };
+    let Some(patch) = capacity(item).and_then(|slots| migrate::patch_from(&bytes, slots)) else {
+        eprintln!("Vast Packs: {} could not be read", path.display());
+        return;
+    };
+    let mut stack = held.clone();
+    if stack.apply_components(&patch).is_err() {
+        eprintln!("Vast Packs: {} holds items this world can't make", path.display());
+        return;
+    }
+    let Some(living) = host.player(uuid).and_then(|p| host.living(p.entity())) else { return };
+    if matches!(living.set_hand_item(host, Hand::Main, Some(stack)), Ok(true)) {
+        let _ = std::fs::rename(&path, path.with_extension("dat.moved"));
+    }
+}
+
 /// A backpack's item: used in the main hand, it opens.
 struct Backpack {
     item: &'static str,
@@ -134,6 +158,7 @@ impl ItemPart for Backpack {
         }
         match host {
             HostSide::Server(host) => {
+                move_old_contents(host, event.player, event.stack, self.item);
                 open(host, event.player, self.item, 0, MenuReplace::CloseFirst);
                 Some(InteractionResult::SuccessServer)
             }
