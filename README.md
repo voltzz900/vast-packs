@@ -20,20 +20,21 @@ chest menu holds at most 54 slots, so they show 45 a page and their last row tur
 
 ## How it keeps your things
 
-A backpack item carries only an id; what it holds is kept in the world, in `<world>/vastpacks/<id>.dat` (so world
-backups carry it), the way Sophisticated Backpacks keeps it in the world's saved data. So:
+What a backpack holds is in the backpack itself (its container, as a shulker box's), so it travels with it: dropped,
+traded, kept in a chest. Its menu's slots are the backpack's own, through Horizon's mod API:
 
-- a backpack dropped, thrown or lost while it is open takes nothing with it, and nothing can be counted twice;
-- a backpack put inside a backpack goes back to you when it closes, and so does a bundle or shulker box that holds
-  one (no backpack can end up locked inside itself);
-- the contents are written when the menu closes, for any reason (closing it, leaving the world, dying); a new file
-  is written and then renamed over the old one, and if it can't be written everything goes back to you.
+- every move goes through the backpack's storage in one transaction, so nothing can be counted twice;
+- the backpack in your hand can't go into itself, and the menu closes once it leaves your hand;
+- an upgrade keeps everything it holds.
 
-Names in English and Brazilian Portuguese. The menu is a plain chest menu, so it should work on servers too; it has
-been tested in single player.
+Names in English and Brazilian Portuguese. The menu is a plain chest menu, so it should work on servers too.
 
-**Install both:** `vastpacks_native-<version>.hnmod` (the native mod: build natives in the launcher after) and
-`vastpacks-<version>.hmod` (the items, art, recipes and names).
+**Install** `vastpacks-<version>.hmod` (one package: the code, items, art, recipes and names), then build natives in
+the launcher.
+
+**From 0.1:** 0.1 kept a backpack's contents in the world (`<world>/vastpacks/<id>.dat`) and came as two files
+(`vastpacks_native-0.1.0.hnmod`, which launchers from 0.2.70 no longer load, and `vastpacks-0.1.0.hmod`). Those
+files are left where they are; 0.2 doesn't read them yet, so a 0.1 backpack opens empty.
 
 ## Not yet
 
@@ -41,10 +42,11 @@ Upgrades (pickup, magnet, feeding, restock), opening with a key, wearing it.
 
 ## Building
 
-`python3 tools/package.py` writes `dist/vastpacks_native-<v>.hnmod` and `dist/vastpacks-<v>.hmod`
-(`tools/build_content.py` makes the content, with every sprite drawn in it; `tools/icon.py` the icon).
+The mod is `mod/`, a crate on Horizon's mod API. `python3 tools/package.py` writes `dist/vastpacks-<v>.hmod`
+with `cargo horizon-mod build` (`tools/build_content.py` makes the content into `mod/`, with every sprite drawn in
+it; `tools/icon.py` the icon).
 
 ## License
 
-MIT, see [LICENSE](LICENSE). The idea of keeping a backpack's contents in the world by id comes from Sophisticated
-Backpacks; no code, art or text of it is used, and this mod is not affiliated with its authors.
+MIT, see [LICENSE](LICENSE). Inspired by Sophisticated Backpacks; no code, art or text of it is used, and this mod
+is not affiliated with its authors.
