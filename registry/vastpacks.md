@@ -1,6 +1,6 @@
 # Registry page: Vast Packs
 
-- **File:** `vastpacks-0.2.0.hmod` (release v0.2.0), kind: native mod
+- **File:** `vastpacks-0.2.1.hmod` (release v0.2.1), kind: native mod
 - **Icon:** `icons/vastpacks.png`
 - **Name:** Vast Packs
 - **Summary:** Backpacks: right-click to open like a chest, from 18 to 54 slots (and up to 180 in pages with Vast Depths); what they hold travels with them.
@@ -29,4 +29,4 @@ Backpacks on Horizon's mod API: hold one in your main hand, right-click, and it 
 
 **What it changes in the game**: through the mod API (an item container on each backpack, a chest menu backed by the held backpack, the `use_item`, `menu_clicked` and `menu_closed` hooks; no mixins). Backpacks of 0.1.0 (which kept their contents in `<world>/vastpacks/`) get them back the first time they're opened; that file is then renamed, never deleted. No network of its own.
 
-0.2.0 replaces 0.1.0's two files (`vastpacks_native` .hnmod and the `vastpacks` content mod). Pinned to Horizon 702ab1e.
+0.2.0 replaces 0.1.0's two files (`vastpacks_native` .hnmod and the `vastpacks` content mod). Pinned to Horizon 0b14f8a.
