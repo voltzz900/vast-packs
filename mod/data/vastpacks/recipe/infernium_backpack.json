@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_transmute",
+  "category": "equipment",
+  "group": "vastpacks_upgrade",
+  "input": "vastpacks:stellarite_backpack",
+  "material": "vastdepths:infernium_block",
+  "result": {
+    "id": "vastpacks:infernium_backpack"
+  },
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "vastdepths"
+    }
+  ]
+}

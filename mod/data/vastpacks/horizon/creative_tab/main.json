@@ -1,0 +1,14 @@
+{
+  "title": "Vast Packs",
+  "icon": "vastpacks:diamond_backpack",
+  "items": [
+    "vastpacks:leather_backpack",
+    "vastpacks:iron_backpack",
+    "vastpacks:gold_backpack",
+    "vastpacks:diamond_backpack",
+    "vastpacks:netherite_backpack",
+    "vastpacks:stellarite_backpack",
+    "vastpacks:infernium_backpack",
+    "vastpacks:voidium_backpack"
+  ]
+}

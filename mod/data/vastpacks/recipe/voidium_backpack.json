@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_transmute",
+  "category": "equipment",
+  "group": "vastpacks_upgrade",
+  "input": "vastpacks:infernium_backpack",
+  "material": "vastdepths:voidium_block",
+  "result": {
+    "id": "vastpacks:voidium_backpack"
+  },
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "vastdepths"
+    }
+  ]
+}

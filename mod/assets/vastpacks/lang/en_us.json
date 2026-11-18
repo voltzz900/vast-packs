@@ -1,0 +1,18 @@
+{
+  "item.vastpacks.diamond_backpack": "Diamond Backpack",
+  "item.vastpacks.gold_backpack": "Gold Backpack",
+  "item.vastpacks.infernium_backpack": "Infernium Backpack",
+  "item.vastpacks.iron_backpack": "Iron Backpack",
+  "item.vastpacks.leather_backpack": "Leather Backpack",
+  "item.vastpacks.netherite_backpack": "Netherite Backpack",
+  "item.vastpacks.stellarite_backpack": "Stellarite Backpack",
+  "item.vastpacks.voidium_backpack": "Voidium Backpack",
+  "vastpacks.busy": "That backpack is already open.",
+  "vastpacks.next": "Next page",
+  "vastpacks.no_world": "Backpacks open in a world.",
+  "vastpacks.page": "Page %s of %s",
+  "vastpacks.pages": "%s pages",
+  "vastpacks.previous": "Previous page",
+  "vastpacks.slots": "%s slots",
+  "vastpacks.title_paged": "%s (%s/%s)"
+}

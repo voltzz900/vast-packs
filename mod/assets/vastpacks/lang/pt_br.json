@@ -1,0 +1,18 @@
+{
+  "item.vastpacks.diamond_backpack": "Mochila de Diamante",
+  "item.vastpacks.gold_backpack": "Mochila de Ouro",
+  "item.vastpacks.infernium_backpack": "Mochila de Infernium",
+  "item.vastpacks.iron_backpack": "Mochila de Ferro",
+  "item.vastpacks.leather_backpack": "Mochila de Couro",
+  "item.vastpacks.netherite_backpack": "Mochila de Netherita",
+  "item.vastpacks.stellarite_backpack": "Mochila de Estelarita",
+  "item.vastpacks.voidium_backpack": "Mochila de Voidium",
+  "vastpacks.busy": "Essa mochila já está aberta.",
+  "vastpacks.next": "Próxima página",
+  "vastpacks.no_world": "Mochilas abrem dentro de um mundo.",
+  "vastpacks.page": "Página %s de %s",
+  "vastpacks.pages": "%s páginas",
+  "vastpacks.previous": "Página anterior",
+  "vastpacks.slots": "%s espaços",
+  "vastpacks.title_paged": "%s (%s/%s)"
+}

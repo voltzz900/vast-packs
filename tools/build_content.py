@@ -12,7 +12,10 @@ import zlib
 from pathlib import Path
 
 NS = "vastpacks"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
+# The Horizon build the mod is made for, and the horizon-mixins tool its `[native]` names.
+HORIZON = "702ab1e3b42921ef025841802e59d64060b6c0b4"
+MIXINS = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
 
 # name, rows, english, portuguese, rarity, (body, dark, trim), upgrade material from the tier below
 TIERS = [
@@ -146,9 +149,10 @@ def build(out):
     files[f"assets/{NS}/lang/en_us.json"] = dict(sorted(lang_en.items()))
     files[f"assets/{NS}/lang/pt_br.json"] = dict(sorted(lang_pt.items()))
 
-    out = Path(out) / NS
-    if out.exists():
-        shutil.rmtree(out)
+    out = Path(out)
+    for sub in ("assets", "data"):
+        if (out / sub).exists():
+            shutil.rmtree(out / sub)
     for path, value in files.items():
         target = out / path
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -157,11 +161,12 @@ def build(out):
         else:
             target.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n")
     (out / "horizon-mod.toml").write_text(
-        f'id = "{NS}"\nname = "Vast Packs (content)"\nversion = "{VERSION}"\n'
-        'description = "The backpacks of Vast Packs: their items, art, recipes and names. Needs the native mod."\n'
-        'authors = ["voltzz900"]\napi = "0.2"\nside = "both"\ncapabilities = ["registries"]\n')
+        f'id = "{NS}"\nname = "Vast Packs"\nversion = "{VERSION}"\n'
+        'description = "Backpacks: right-click to open; what they hold travels with them."\n'
+        'authors = ["voltzz900"]\napi = "0.2"\nside = "both"\ncapabilities = ["registries"]\n\n'
+        f'[native]\ngame = "26.3"\nhorizon = "{HORIZON}"\nmixins = "{MIXINS}"\n')
     print(f"{NS}: {len(items)} backpacks, {len(files) + 1} files")
 
 
 if __name__ == "__main__":
-    build(sys.argv[1] if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent / "build")
+    build(Path(__file__).resolve().parent.parent / "mod")

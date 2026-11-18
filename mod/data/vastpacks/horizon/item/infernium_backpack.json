@@ -1,0 +1,25 @@
+{
+  "template": "minecraft:leather",
+  "max_stack_size": 1,
+  "rarity": "epic",
+  "components": {
+    "minecraft:lore": [
+      {
+        "translate": "vastpacks.slots",
+        "with": [
+          "135"
+        ],
+        "color": "gray",
+        "italic": false
+      },
+      {
+        "translate": "vastpacks.pages",
+        "with": [
+          "3"
+        ],
+        "color": "dark_gray",
+        "italic": false
+      }
+    ]
+  }
+}

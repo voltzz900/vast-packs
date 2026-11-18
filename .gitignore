@@ -1,3 +1,7 @@
 /build
 /dist
 __pycache__/
+/mod/.horizon
+/mod/target
+/mod/Cargo.lock
+/mod/LICENSE
