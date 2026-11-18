@@ -14,6 +14,8 @@ MOD = ROOT / "mod"
 
 def main():
     subprocess.run([sys.executable, "-I", str(ROOT / "tools/build_content.py")], check=True)
+    # The mod has no registry dependencies: a lock from a local `cargo check` is not part of the package.
+    (MOD / "Cargo.lock").unlink(missing_ok=True)
     shutil.copy(ROOT / "LICENSE", MOD / "LICENSE")
     subprocess.run(["cargo", "horizon-mod", "build"], cwd=MOD, check=True)
     version = tomllib.loads((MOD / "horizon-mod.toml").read_text())["version"]
