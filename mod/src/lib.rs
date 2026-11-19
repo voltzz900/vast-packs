@@ -122,14 +122,31 @@ fn open(host: &mut dyn ServerHost, uuid: u128, item: &'static str, page: usize, 
     }
 }
 
-/// A 0.1 backpack (its contents in a file of the world) gets them back in itself, once: the held stack is replaced by
-/// one holding them, and the file is renamed so it is never read twice.
+/// A 0.1 backpack (its contents in a file of the world) gets them back in itself, once. The file names no owner, so
+/// only an operator's hand moves them (anyone else is told to ask one): the held stack is replaced by one holding
+/// them and no longer carrying the 0.1 id, then the file is renamed. With the id gone the stack is never imported
+/// again, even if the rename fails; if the game stops before the stack is saved, it still has the id and is empty,
+/// and the moved file fills it again.
 fn move_old_contents(host: &mut dyn ServerHost, uuid: u128, held: &ItemStack, item: &str) {
-    let Some(id) = held.components().and_then(|c| migrate::old_id(c.as_nbt())) else { return };
+    let Some(components) = held.components() else { return };
+    let components = components.as_nbt();
+    let Some(id) = migrate::old_id(components) else { return };
+    let Some(player) = host.player(uuid) else { return };
     let Some(world) = host.world_dir() else { return };
-    let path = migrate::file(&world, &id);
-    let Ok(bytes) = std::fs::read(&path) else { return };
-    let Some(patch) = capacity(item).and_then(|slots| migrate::patch_from(&bytes, slots)) else {
+    let file = migrate::file(&world, &id);
+    let Some((path, unmoved)) = migrate::source(&file, !migrate::holds_items(components)) else { return };
+    if player.permission_level(host).unwrap_or(0) < 2 {
+        let _ = player.tell(host, tr("vastpacks.legacy", Vec::new()));
+        return;
+    }
+    let bytes = match std::fs::read(&path) {
+        Ok(bytes) => bytes,
+        Err(e) => {
+            eprintln!("Vast Packs: {} could not be read: {e}", path.display());
+            return;
+        }
+    };
+    let Some(patch) = capacity(item).and_then(|slots| migrate::patch_from(&bytes, slots, components)) else {
         eprintln!("Vast Packs: {} could not be read", path.display());
         return;
     };
@@ -138,9 +155,14 @@ fn move_old_contents(host: &mut dyn ServerHost, uuid: u128, held: &ItemStack, it
         eprintln!("Vast Packs: {} holds items this world can't make", path.display());
         return;
     }
-    let Some(living) = host.player(uuid).and_then(|p| host.living(p.entity())) else { return };
-    if matches!(living.set_hand_item(host, Hand::Main, Some(stack)), Ok(true)) {
-        let _ = std::fs::rename(&path, path.with_extension("dat.moved"));
+    let Some(living) = host.living(player.entity()) else { return };
+    if !matches!(living.set_hand_item(host, Hand::Main, Some(stack)), Ok(true)) {
+        eprintln!("Vast Packs: the backpack of {} could not be replaced; nothing was moved", path.display());
+        return;
+    }
+    if unmoved && let Err(e) = std::fs::rename(&path, migrate::moved(&path)) {
+        // The backpack no longer has the id, so the file is not read again; it stays as a backup.
+        eprintln!("Vast Packs: {} was moved into its backpack but could not be renamed: {e}", path.display());
     }
 }
 

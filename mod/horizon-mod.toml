@@ -1,6 +1,6 @@
 id = "vastpacks"
 name = "Vast Packs"
-version = "0.2.1"
+version = "0.2.2"
 description = "Backpacks: right-click to open; what they hold travels with them."
 authors = ["voltzz900"]
 api = "0.2"

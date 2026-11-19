@@ -8,6 +8,7 @@
   "item.vastpacks.stellarite_backpack": "Mochila de Estelarita",
   "item.vastpacks.voidium_backpack": "Mochila de Voidium",
   "vastpacks.busy": "Essa mochila já está aberta.",
+  "vastpacks.legacy": "Esta mochila ainda guarda o conteúdo da Vast Packs 0.1 no mundo. Um operador precisa abri-la uma vez para trazê-lo para dentro dela.",
   "vastpacks.next": "Próxima página",
   "vastpacks.no_world": "Mochilas abrem dentro de um mundo.",
   "vastpacks.page": "Página %s de %s",

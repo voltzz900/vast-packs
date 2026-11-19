@@ -1,7 +1,9 @@
 //! Backpacks of 0.1: their contents were kept in the world, in `<world>/vastpacks/<id>.dat` (a named NBT compound,
 //! uncompressed, its `Items` a list of `{Slot, id, count, components}`), the backpack carrying only
-//! `minecraft:custom_data.vastpacks_id`. The first time such a backpack is opened its contents move into it (its
-//! container component) and the file is renamed `<id>.dat.moved`.
+//! `minecraft:custom_data.vastpacks_id`. The file names no owner, so whoever holds a stack with that id could claim
+//! it: the contents move into a backpack (its container component) only while an operator holds it. The same patch
+//! drops the id, so a backpack is never imported twice, and the file is then renamed `<id>.dat.moved`; a backpack
+//! that still has the id and is empty (the game stopped before it was saved) is filled again from that file.
 
 use mod_api::{Compound, Tag};
 use std::path::{Path, PathBuf};
@@ -34,9 +36,42 @@ pub fn file(world: &Path, id: &str) -> PathBuf {
     world.join("vastpacks").join(format!("{id}.dat"))
 }
 
+/// The name a 0.1 file has once its contents were moved.
+pub fn moved(file: &Path) -> PathBuf {
+    file.with_extension("dat.moved")
+}
+
+/// Whether the stack's container component holds anything.
+pub fn holds_items(components: &Compound) -> bool {
+    matches!(get(components, "minecraft:container"), Some(Tag::List(entries)) if !entries.is_empty())
+}
+
+/// Where to read a backpack's 0.1 contents from: its file if it is still there, or the moved file when the backpack
+/// is empty (an import whose backpack was never saved); `None` otherwise. The bool says whether it is the
+/// unmoved file.
+pub fn source(file: &Path, empty: bool) -> Option<(PathBuf, bool)> {
+    if file.is_file() {
+        Some((file.to_path_buf(), true))
+    } else if empty && moved(file).is_file() {
+        Some((moved(file), false))
+    } else {
+        None
+    }
+}
+
+/// The backpack's custom data without the 0.1 id, as a patch entry.
+fn custom_data_without_id(components: &Compound) -> Compound {
+    match get(components, "minecraft:custom_data") {
+        Some(Tag::Compound(data)) => {
+            data.iter().filter(|(k, _)| !k.0.iter().copied().eq("vastpacks_id".encode_utf16())).map(|(k, v)| (k.clone(), v.clone())).collect()
+        }
+        _ => Compound::new(),
+    }
+}
+
 /// The component patch that puts a 0.1 file's items into the backpack (`minecraft:container`, by slot), for the
-/// slots it has; `None` when the file can't be read.
-pub fn patch_from(bytes: &[u8], slots: usize) -> Option<Compound> {
+/// slots it has, and takes the 0.1 id out of its custom data; `None` when the file can't be read.
+pub fn patch_from(bytes: &[u8], slots: usize, components: &Compound) -> Option<Compound> {
     let root = read_named(bytes)?;
     let mut entries = Vec::new();
     if let Some(Tag::List(items)) = get(&root, "Items") {
@@ -60,6 +95,7 @@ pub fn patch_from(bytes: &[u8], slots: usize) -> Option<Compound> {
     }
     let mut patch = Compound::new();
     patch.insert(java("minecraft:container"), Tag::List(entries));
+    patch.insert(java("minecraft:custom_data"), Tag::Compound(custom_data_without_id(components)));
     Some(patch)
 }
 
@@ -206,7 +242,7 @@ mod tests {
 
     #[test]
     fn moves_items_by_slot() {
-        let patch = patch_from(&sample(), 18).unwrap();
+        let patch = patch_from(&sample(), 18, &Compound::new()).unwrap();
         let Some(Tag::List(entries)) = get(&patch, "minecraft:container") else { panic!("no container") };
         assert_eq!(entries.len(), 1);
         let Tag::Compound(e) = &entries[0] else { panic!() };
@@ -215,8 +251,40 @@ mod tests {
         assert_eq!(get(item, "count"), Some(&Tag::Int(5)));
         assert!(get(item, "Slot").is_none());
         // A slot past the backpack's is left out.
-        let patch = patch_from(&sample(), 2).unwrap();
+        let patch = patch_from(&sample(), 2, &Compound::new()).unwrap();
         assert_eq!(get(&patch, "minecraft:container"), Some(&Tag::List(Vec::new())));
+    }
+
+    #[test]
+    fn the_patch_drops_the_old_id_and_keeps_other_data() {
+        let mut data = Compound::new();
+        data.insert(java("vastpacks_id"), Tag::String(java("19a0f3")));
+        data.insert(java("other"), Tag::Int(7));
+        let mut c = Compound::new();
+        c.insert(java("minecraft:custom_data"), Tag::Compound(data));
+        let patch = patch_from(&sample(), 18, &c).unwrap();
+        assert_eq!(old_id(&patch), None);
+        let Some(Tag::Compound(kept)) = get(&patch, "minecraft:custom_data") else { panic!("no custom data") };
+        assert_eq!(get(kept, "other"), Some(&Tag::Int(7)));
+        // Applied, the patch leaves a backpack the migration no longer picks up.
+        assert!(holds_items(&patch));
+    }
+
+    #[test]
+    fn the_source_is_the_file_or_for_an_empty_backpack_the_moved_one() {
+        let dir = std::env::temp_dir().join(format!("vastpacks-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let world = dir.as_path();
+        std::fs::create_dir_all(world.join("vastpacks")).unwrap();
+        let f = file(world, "ab");
+        assert_eq!(source(&f, true), None);
+        std::fs::write(&f, sample()).unwrap();
+        assert_eq!(source(&f, false), Some((f.clone(), true)));
+        std::fs::rename(&f, moved(&f)).unwrap();
+        // Moved: only a backpack that is still empty reads it again.
+        assert_eq!(source(&f, false), None);
+        assert_eq!(source(&f, true), Some((moved(&f), false)));
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]
@@ -239,7 +307,7 @@ mod real_file {
     fn reads_a_real_file() {
         let Ok(path) = std::env::var("VASTPACKS_SAMPLE") else { return };
         let bytes = std::fs::read(path).unwrap();
-        let patch = super::patch_from(&bytes, 180).expect("readable");
+        let patch = super::patch_from(&bytes, 180, &mod_api::Compound::new()).expect("readable");
         let Some(mod_api::Tag::List(entries)) = super::get(&patch, "minecraft:container") else { panic!("no container") };
         for e in entries {
             let mod_api::Tag::Compound(e) = e else { continue };

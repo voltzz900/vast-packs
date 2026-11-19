@@ -34,8 +34,11 @@ the launcher.
 
 **From 0.1:** 0.1 kept a backpack's contents in the world (`<world>/vastpacks/<id>.dat`) and came as two files
 (`vastpacks_native-0.1.0.hnmod`, which launchers from 0.2.70 no longer load, and `vastpacks-0.1.0.hmod`). The
-first time a 0.1 backpack is opened with 0.2, its contents move from that file into it, and the file is renamed
-`<id>.dat.moved` (kept, never read again).
+file names no owner, so the contents move only while an **operator** holds the backpack: an operator opens a 0.1
+backpack once with 0.2.2 and its contents move from that file into it; anyone else is told to ask one. The moved
+backpack loses its 0.1 id, so it is never imported twice, and the file is renamed `<id>.dat.moved` and kept. If the
+game stops before the backpack is saved, it still has the id and is empty, and the next open fills it again from
+that file.
 
 ## Not yet
 

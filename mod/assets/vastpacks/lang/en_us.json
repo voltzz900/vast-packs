@@ -8,6 +8,7 @@
   "item.vastpacks.stellarite_backpack": "Stellarite Backpack",
   "item.vastpacks.voidium_backpack": "Voidium Backpack",
   "vastpacks.busy": "That backpack is already open.",
+  "vastpacks.legacy": "This backpack still holds its Vast Packs 0.1 contents in the world. An operator must open it once to move them into it.",
   "vastpacks.next": "Next page",
   "vastpacks.no_world": "Backpacks open in a world.",
   "vastpacks.page": "Page %s of %s",

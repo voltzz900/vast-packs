@@ -12,7 +12,7 @@ import zlib
 from pathlib import Path
 
 NS = "vastpacks"
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 # The Horizon build the mod is made for, and the horizon-mixins tool its `[native]` names.
 HORIZON = "0b14f8acfd97fa2c750e42795249dcc981178ca4"
 MIXINS = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
@@ -96,10 +96,10 @@ def png(pixels):
 def build(out):
     files, items = {}, []
     lang_en = {"vastpacks.slots": "%s slots", "vastpacks.pages": "%s pages", "vastpacks.previous": "Previous page",
-               "vastpacks.next": "Next page", "vastpacks.page": "Page %s of %s", "vastpacks.title_paged": "%s (%s/%s)", "vastpacks.busy": "That backpack is already open.",
+               "vastpacks.next": "Next page", "vastpacks.page": "Page %s of %s", "vastpacks.title_paged": "%s (%s/%s)", "vastpacks.busy": "That backpack is already open.", "vastpacks.legacy": "This backpack still holds its Vast Packs 0.1 contents in the world. An operator must open it once to move them into it.",
                "vastpacks.no_world": "Backpacks open in a world."}
     lang_pt = {"vastpacks.slots": "%s espaços", "vastpacks.pages": "%s páginas", "vastpacks.previous": "Página anterior",
-               "vastpacks.next": "Próxima página", "vastpacks.page": "Página %s de %s", "vastpacks.title_paged": "%s (%s/%s)", "vastpacks.busy": "Essa mochila já está aberta.",
+               "vastpacks.next": "Próxima página", "vastpacks.page": "Página %s de %s", "vastpacks.title_paged": "%s (%s/%s)", "vastpacks.busy": "Essa mochila já está aberta.", "vastpacks.legacy": "Esta mochila ainda guarda o conteúdo da Vast Packs 0.1 no mundo. Um operador precisa abri-la uma vez para trazê-lo para dentro dela.",
                "vastpacks.no_world": "Mochilas abrem dentro de um mundo."}
     below = None
     for name, rows, en, pt, rarity, trim, material in TIERS:
