@@ -101,12 +101,12 @@ pub fn patch_from(bytes: &[u8], slots: usize, components: &Compound) -> Option<C
 
 // ---- a small reader for Java's NBT (big-endian, modified UTF-8) ----------------------------------------------------
 
-struct Reader<'a> {
+struct NbtReader<'a> {
     b: &'a [u8],
     i: usize,
 }
 
-impl Reader<'_> {
+impl NbtReader<'_> {
     fn take(&mut self, n: usize) -> Option<&[u8]> {
         let s = self.b.get(self.i..self.i.checked_add(n)?)?;
         self.i += n;
@@ -207,7 +207,7 @@ fn modified_utf8(raw: &[u8]) -> String {
 
 /// A named root compound.
 fn read_named(bytes: &[u8]) -> Option<Compound> {
-    let mut r = Reader { b: bytes, i: 0 };
+    let mut r = NbtReader { b: bytes, i: 0 };
     if r.u8()? != 10 {
         return None;
     }

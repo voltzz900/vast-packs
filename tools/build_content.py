@@ -12,7 +12,7 @@ import zlib
 from pathlib import Path
 
 NS = "vastpacks"
-VERSION = "0.2.2"
+VERSION = "0.2.3"
 # The Horizon build the mod is made for, and the horizon-mixins tool its `[native]` names.
 HORIZON = "0b14f8acfd97fa2c750e42795249dcc981178ca4"
 MIXINS = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
