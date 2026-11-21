@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Builds the content half of Vast Packs (`vastpacks`): the backpacks as items, their sprites (drawn here), recipes
-and names. The native mod `vastpacks_native` opens them and keeps what they hold.
-
-Usage: build_content.py <output dir>   (writes <output dir>/vastpacks)
+"""Builds Vast Packs' content and manifest into `mod/`: the backpacks as items, their sprites (drawn here), recipes and
+names. The mod's id is `vastbackpacks`; its content stays in the `vastpacks` namespace it owns, so the items keep the
+ids worlds saved with 0.1 and 0.2 (`vastpacks:leather_backpack`, ...).
 """
 import json
 import shutil
@@ -11,8 +10,11 @@ import sys
 import zlib
 from pathlib import Path
 
+# The registry project and manifest id. 0.1 and 0.2 used `vastpacks`, which the registry keeps as a content-only
+# project; the items stay in that namespace.
+MOD_ID = "vastbackpacks"
 NS = "vastpacks"
-VERSION = "0.2.3"
+VERSION = "0.3.0"
 # The Horizon build the mod is made for, and the horizon-mixins tool its `[native]` names.
 HORIZON = "0b14f8acfd97fa2c750e42795249dcc981178ca4"
 MIXINS = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"
@@ -161,11 +163,12 @@ def build(out):
         else:
             target.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n")
     (out / "horizon-mod.toml").write_text(
-        f'id = "{NS}"\nname = "Vast Packs"\nversion = "{VERSION}"\n'
+        f'id = "{MOD_ID}"\nname = "Vast Packs"\nversion = "{VERSION}"\n'
         'description = "Backpacks: right-click to open; what they hold travels with them."\n'
-        'authors = ["voltzz900"]\napi = "0.2"\nside = "both"\ncapabilities = ["registries"]\n\n'
+        'authors = ["voltzz900"]\napi = "0.2"\nside = "both"\ncapabilities = ["registries"]\n'
+        f'namespaces = ["{NS}"]\n\n'
         f'[native]\ngame = "26.3"\nhorizon = "{HORIZON}"\nmixins = "{MIXINS}"\n')
-    print(f"{NS}: {len(items)} backpacks, {len(files) + 1} files")
+    print(f"{MOD_ID} ({NS}:): {len(items)} backpacks, {len(files) + 1} files")
 
 
 if __name__ == "__main__":

@@ -1,11 +1,12 @@
-id = "vastpacks"
+id = "vastbackpacks"
 name = "Vast Packs"
-version = "0.2.3"
+version = "0.3.0"
 description = "Backpacks: right-click to open; what they hold travels with them."
 authors = ["voltzz900"]
 api = "0.2"
 side = "both"
 capabilities = ["registries"]
+namespaces = ["vastpacks"]
 
 [native]
 game = "26.3"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the mod's data and assets, then packs `mod/` into dist/vastpacks-<version>.hmod with the official packer
+"""Builds the mod's data and assets, then packs `mod/` into dist/vastbackpacks-<version>.hmod with the official packer
 (`cargo horizon-mod build`, which needs the pinned build's SDK)."""
 import hashlib
 import shutil
@@ -21,8 +21,9 @@ def main():
     version = tomllib.loads((MOD / "horizon-mod.toml").read_text())["version"]
     dist = ROOT / "dist"
     dist.mkdir(exist_ok=True)
-    out = dist / f"vastpacks-{version}.hmod"
-    shutil.copy(MOD / "target/horizon-mod/vastpacks.hmod", out)
+    mod_id = tomllib.loads((MOD / "horizon-mod.toml").read_text())["id"]
+    out = dist / f"{mod_id}-{version}.hmod"
+    shutil.copy(MOD / f"target/horizon-mod/{mod_id}.hmod", out)
     print(f"{out}  {hashlib.sha256(out.read_bytes()).hexdigest()}")
 
 

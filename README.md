@@ -29,8 +29,12 @@ traded, kept in a chest. Its menu's slots are the backpack's own, through Horizo
 
 Names in English and Brazilian Portuguese. The menu is a plain chest menu, so it should work on servers too.
 
-**Install** `vastpacks-<version>.hmod` (one package: the code, items, art, recipes and names), then build natives in
-the launcher.
+**Install** `vastbackpacks-<version>.hmod` (one package: the code, items, art, recipes and names), then build natives in
+the launcher. From 0.3.0 the mod's id is `vastbackpacks`; its items keep their `vastpacks:` ids (the namespace it
+owns), so saved backpacks stay. Turn off an old `vastpacks` mod: two mods can't own one namespace.
+
+**Known issue:** in single player the backpack menu closes as soon as it opens: Horizon can't yet back a menu's slots during the
+player's own turn ([horizon-rust/horizon#18513](https://github.com/horizon-rust/horizon/issues/18513)).
 
 **From 0.1:** 0.1 kept a backpack's contents in the world (`<world>/vastpacks/<id>.dat`) and came as two files
 (`vastpacks_native-0.1.0.hnmod`, which launchers from 0.2.70 no longer load, and `vastpacks-0.1.0.hmod`). The
