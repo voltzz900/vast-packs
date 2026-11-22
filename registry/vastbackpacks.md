@@ -27,8 +27,8 @@ Backpacks on Horizon's mod API: hold one in your main hand, right-click, and it 
 - **What it holds is in the backpack itself** (its container, as a shulker box's): drop it, trade it, keep it in a chest, it travels with its contents.
 - **Safe by design**: the menu's slots are the backpack's own storage, so every move goes through it in one transaction; the backpack in your hand can't go into itself, and the menu closes once it leaves your hand.
 
-**What it changes in the game**: through the mod API (an item container on each backpack, a chest menu backed by the held backpack, the `use_item`, `menu_clicked` and `menu_closed` hooks; no mixins). Backpacks of 0.1.0 (which kept their contents in `<world>/vastpacks/`) get them back the first time they're opened; that file is then renamed, never deleted. No network of its own.
+**What it changes in the game**: through the mod API (an item container on each backpack, a chest menu backed by the held backpack, the `use_item`, `menu_clicked` and `menu_closed` hooks; no mixins). Backpacks of 0.1.0 (which kept their contents in `<world>/vastpacks/`) get them back once, the first time one is opened while an operator holds it; that file is then renamed, never deleted. No network of its own.
 
 The project's id is `vastbackpacks`: `vastpacks` stays the registry's content-only 0.1.0 (the half whose native part was never published). The items keep their `vastpacks:` ids, so backpacks saved with 0.1 and 0.2 stay in their worlds. Turn the old `vastpacks` content mod off: two mods can't own one namespace. Pinned to Horizon 0b14f8a.
 
-Known issue: in single player the backpack menu closes as soon as it opens, because Horizon can't yet back a menu's slots during the player's own turn (horizon-rust/horizon#18513).
+Known issue: in single player the backpack menu closes as soon as it opens, because Horizon can't yet back a menu's slots during the player's own turn (horizon-rust/horizon#18513), and in creative a shift-click can fill a second backpack instead of the held one (horizon-rust/horizon#18515). Both are in the game; the fixes are horizon-rust/horizon#19593 and horizon-rust/horizon#19595.
