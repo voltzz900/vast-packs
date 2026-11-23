@@ -33,12 +33,15 @@ Names in English and Brazilian Portuguese. The menu is a plain chest menu, so it
 the launcher. From 0.3.0 the mod's id is `vastbackpacks`; its items keep their `vastpacks:` ids (the namespace it
 owns), so saved backpacks stay. Turn off an old `vastpacks` mod: two mods can't own one namespace.
 
-A world saved with the old `vastpacks` mod opens first on Horizon's missing-mods screen, which lists `vastpacks`
-(code mod). That is the old id, not lost backpacks: choose **Back Up and Open** (or Open Without a Backup) and the
-backpacks are there with what they hold. The world then remembers `vastbackpacks`, and the screen doesn't come back.
+A world saved with the old `vastpacks` mod opens as it is from 0.3.1: the mod tells the game that `vastpacks` was its
+own old id, so neither the missing-mods screen nor a dedicated server's refusal comes up, and the world records
+`vastbackpacks` on its next save. (0.3.0 didn't, and showed that screen once: **Back Up and Open** went on with the
+backpacks and what they hold.)
 
-**Known issue:** in single player the backpack menu closes as soon as it opens: Horizon can't yet back a menu's slots during the
-player's own turn ([horizon-rust/horizon#18513](https://github.com/horizon-rust/horizon/issues/18513)).
+**Known issue:** in single player the backpack menu closes as soon as it opens, and on the pinned engine it can on a
+dedicated server too: Horizon can't yet back a menu's slots during the player's own turn
+([horizon-rust/horizon#18513](https://github.com/horizon-rust/horizon/issues/18513); the fix is
+[horizon-rust/horizon#19593](https://github.com/horizon-rust/horizon/pull/19593)).
 
 **From 0.1:** 0.1 kept a backpack's contents in the world (`<world>/vastpacks/<id>.dat`) and came as two files
 (`vastpacks_native-0.1.0.hnmod`, which launchers from 0.2.70 no longer load, and `vastpacks-0.1.0.hmod`). The

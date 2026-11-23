@@ -7,8 +7,8 @@ mod migrate;
 
 use mod_api::{
     self, Hand, HostSide, Hooks, InteractionResult, ItemPart, ItemStack, MenuClickedEvent, MenuClosedEvent,
-    MenuReplace, MenuSlotPlace, Registrar, RegistrationContext, ServerAboutToStartEvent, ServerHost, Text,
-    UseItemEvent,
+    MenuReplace, MenuSlotPlace, ModMismatch, ModMismatchEvent, Registrar, RegistrationContext,
+    ServerAboutToStartEvent, ServerHost, Text, UseItemEvent,
 };
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -25,6 +25,16 @@ const TIERS: [(&str, u8, usize); 8] = [
     ("vastpacks:voidium_backpack", 6, 4),
 ];
 const PER_PAGE: usize = 45;
+
+/// The mod's id before 0.3.0. Its items were already `vastpacks:`, as they still are, so a world saved with it
+/// loses nothing when it opens under this mod.
+const OLD_ID: &str = "vastpacks";
+
+/// Whether a world's saved mod list names the old id and no mod by that id is loaded now: that is this mod under
+/// its old id, not a missing one.
+fn renamed(mismatches: &[ModMismatch]) -> bool {
+    mismatches.iter().any(|m| m.mod_id == OLD_ID && m.current_version.is_none())
+}
 
 /// A backpack's menu: its rows, the slots a page shows, and its pages.
 fn layout(item: &str) -> Option<(u8, usize, usize)> {
@@ -231,6 +241,13 @@ impl Hooks for VastPacks {
         }
     }
 
+    /// A world saved with the old id opens without asking about it, on the client and on a dedicated server alike.
+    fn mod_mismatch(&self, _host: HostSide, event: &mut ModMismatchEvent<'_>) {
+        if renamed(event.mismatches) {
+            event.resolved.push(OLD_ID.to_owned().into());
+        }
+    }
+
     /// A new server keeps nothing of the last one's menus.
     fn server_about_to_start(&self, _host: &mut dyn ServerHost, _event: &mut ServerAboutToStartEvent) {
         if let Ok(mut o) = OPEN.lock() {
@@ -250,5 +267,19 @@ mod tests {
         assert_eq!(layout("vastpacks:voidium_backpack"), Some((6, 45, 4)));
         assert_eq!(capacity("vastpacks:infernium_backpack"), Some(135));
         assert_eq!(layout("minecraft:chest"), None);
+    }
+
+    fn mismatch(id: &str, current: Option<&str>) -> ModMismatch {
+        ModMismatch { mod_id: id.into(), saved_version: "0.2.3".into(), current_version: current.map(Into::into) }
+    }
+
+    #[test]
+    fn old_id_is_resolved_only_when_missing() {
+        assert!(renamed(&[mismatch("vastpacks", None)]));
+        assert!(renamed(&[mismatch("other", None), mismatch("vastpacks", None)]));
+        // An old `vastpacks` mod that is still loaded is that mod, not this one.
+        assert!(!renamed(&[mismatch("vastpacks", Some("0.1.0"))]));
+        assert!(!renamed(&[mismatch("other", None)]));
+        assert!(!renamed(&[]));
     }
 }
