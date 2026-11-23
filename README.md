@@ -34,8 +34,8 @@ the launcher. From 0.3.0 the mod's id is `vastbackpacks`; its items keep their `
 owns), so saved backpacks stay. Turn off an old `vastpacks` mod: two mods can't own one namespace.
 
 A world saved with the old `vastpacks` mod opens as it is from 0.3.1: the mod tells the game that `vastpacks` was its
-own old id, so neither the missing-mods screen nor a dedicated server's refusal comes up, and the world records
-`vastbackpacks` on its next save. (0.3.0 didn't, and showed that screen once: **Back Up and Open** went on with the
+own old id, so the missing-mods question is not asked (tested in single player; on a dedicated server the game asks the
+same hook, not yet tried there), and the world records `vastbackpacks` on its next save. (0.3.0 didn't, and showed that screen once: **Back Up and Open** went on with the
 backpacks and what they hold.)
 
 **Known issue:** in single player the backpack menu closes as soon as it opens, and on the pinned engine it can on a
