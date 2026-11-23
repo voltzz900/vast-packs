@@ -33,6 +33,10 @@ Names in English and Brazilian Portuguese. The menu is a plain chest menu, so it
 the launcher. From 0.3.0 the mod's id is `vastbackpacks`; its items keep their `vastpacks:` ids (the namespace it
 owns), so saved backpacks stay. Turn off an old `vastpacks` mod: two mods can't own one namespace.
 
+A world saved with the old `vastpacks` mod opens first on Horizon's missing-mods screen, which lists `vastpacks`
+(code mod). That is the old id, not lost backpacks: choose **Back Up and Open** (or Open Without a Backup) and the
+backpacks are there with what they hold. The world then remembers `vastbackpacks`, and the screen doesn't come back.
+
 **Known issue:** in single player the backpack menu closes as soon as it opens: Horizon can't yet back a menu's slots during the
 player's own turn ([horizon-rust/horizon#18513](https://github.com/horizon-rust/horizon/issues/18513)).
 
